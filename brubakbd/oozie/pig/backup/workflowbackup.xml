@@ -1,0 +1,69 @@
+<workflow-app name="PigHive" xmlns="uri:oozie:workflow:0.4">
+    <start to="PigAction"/>
+    <action name="PigAction">
+        <pig>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                  <delete path="${PigOutputPath}/${year}-${month}-${day}"/>
+            </prepare>
+            <script>/tmp/deployBrubakbd/pig/pigLog.pig</script>
+              <param>input=${PigInputPath}</param>
+              <param>output=${PigOutputPath}</param>
+	      <param>year=${year}</param>
+              <param>month=${month}</param>
+              <param>day=${day}</param>
+        </pig>
+        <ok to="HiveCreate"/>
+        <error to="kill"/>
+    </action>
+    <action name="HiveCreate">
+        <hive2 xmlns="uri:oozie:hive2-action:0.1">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+              <job-xml>/tmp/shared/hive-site.xml</job-xml>
+	<jdbc-url>jdbc:hive2://hadoop-16.csse.rose-hulman.edu:10000</jdbc-url>
+	<password>pimpdaddyballer</password>
+            <script>/tmp/deployBrubakbd/pig/hiveCreate.hql</script>
+	      <param>pigOutputDir=${PigOutputPath}</param>
+              <param>databaseName=${databaseName}</param>
+              <param>tableName=${tableName}</param>
+              <param>year=${year}</param>
+              <param>month=${month}</param>
+              <param>day=${day}</param>
+        </hive2>
+        <ok to="orcLoad"/>
+        <error to="kill"/>
+    </action>
+    <action name="orcLoad">
+        <hive2 xmlns="uri:oozie:hive2-action:0.1">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+              <job-xml>/tmp/shared/hive-site.xml</job-xml>
+        <jdbc-url>jdbc:hive2://hadoop-16.csse.rose-hulman.edu:10000</jdbc-url>
+        <password>pimpdaddyballer</password>
+            <script>/tmp/deployBrubakbd/pig/orcLoad.hql</script>
+              <param>databaseName=${databaseName}</param>
+              <param>tableName=${tableName}</param>
+              <param>orcName=${orcName}</param>
+        </hive2>
+        <ok to="sqoop"/>
+        <error to="kill"/>
+    </action>
+    <action name="sqoop">
+        <sqoop xmlns="uri:oozie:sqoop-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+              <job-xml>/tmp/shared/hive-site.xml</job-xml>
+            <command>export --connect jdbc:mysql://hadoop-16.csse.rose-hulman.edu:3306/${mysqlDatabaseName} --username root -m 1 --table ${mysqlTable} --hcatalog-database ${databaseName} --hcatalog-table ${tableName} --skip-dist-cache</command>
+        </sqoop>
+        <ok to="end"/>
+        <error to="kill"/>
+    </action>
+
+    <kill name="kill">
+        <message>Action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>
+

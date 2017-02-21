@@ -1,0 +1,18 @@
+<workflow-app name="sqoop" xmlns="uri:oozie:workflow:0.4">
+    <start to="exp"/>
+    <action name="exp">
+	<sqoop xmlns="uri:oozie:sqoop-action:0.2">
+	    <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+	      <job-xml>/tmp/shared/hive-site.xml</job-xml>
+            <command>export --connect jdbc:mysql://hadoop-16.csse.rose-hulman.edu:3306/lab8brubakbd --username root -m 1 --table oozie --hcatalog-database lab8brubakbd --hcatalog-table oozie --skip-dist-cache</command>
+        </sqoop>
+        <ok to="end"/>
+        <error to="kill"/>
+    </action>
+    <kill name="kill">
+        <message>Action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>
+

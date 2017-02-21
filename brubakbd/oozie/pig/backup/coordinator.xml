@@ -1,0 +1,25 @@
+<coordinator-app name="PigCoordinator"
+  frequency="${coord:days(1)}"
+  start="2017-01-26T11:36Z" end="2017-01-26T17:36Z" timezone="America/Los_Angeles"
+  xmlns="uri:oozie:coordinator:0.2">
+  <action>
+    <workflow>
+      <app-path>${wf_application_path}</app-path>
+      <configuration>
+        <property>
+          <name>year</name>
+          <value>${coord:formatTime(coord:nominalTime(),'yyyy')}</value>
+        </property>
+        <property>
+          <name>month</name>
+          <value>${coord:formatTime(coord:nominalTime(),'MM')}</value>
+        </property>
+        <property>
+          <name>day</name>
+          <value>${coord:formatTime(coord:nominalTime(),'dd')}</value>
+        </property>
+      </configuration>
+   </workflow>
+  </action>
+</coordinator-app>
+
